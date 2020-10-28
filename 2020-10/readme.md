@@ -48,3 +48,4 @@ func uniqueOccurrences(arr []int) bool {
     return len(cnt) == len(times)
 }
 ```
+> 分析：构建hash表计算各值得次数，再构建次数的hash，如果值的次数hash表长度和次数hash表长度不等就是存在重复的
