@@ -157,3 +157,122 @@ func islandPerimeter(grid [][]int) int {
     return sum
 }
 ```
+### date 2020-10-37
+#### [381. O(1) 时间插入、删除和获取随机元素 - 允许重复](https://leetcode-cn.com/problems/insert-delete-getrandom-o1-duplicates-allowed/)
+
+```
+设计一个支持在平均 时间复杂度 O(1) 下， 执行以下操作的数据结构。
+
+注意: 允许出现重复元素。
+
+insert(val)：向集合中插入元素 val。
+remove(val)：当 val 存在时，从集合中移除一个 val。
+getRandom：从现有集合中随机获取一个元素。每个元素被返回的概率应该与其在集合中的数量呈线性相关。
+
+示例
+
+// 初始化一个空的集合。
+RandomizedCollection collection = new RandomizedCollection();
+
+// 向集合中插入 1 。返回 true 表示集合不包含 1 。
+collection.insert(1);
+
+// 向集合中插入另一个 1 。返回 false 表示集合包含 1 。集合现在包含 [1,1] 。
+collection.insert(1);
+
+// 向集合中插入 2 ，返回 true 。集合现在包含 [1,1,2] 。
+collection.insert(2);
+
+// getRandom 应当有 2/3 的概率返回 1 ，1/3 的概率返回 2 。
+collection.getRandom();
+
+// 从集合中删除 1 ，返回 true 。集合现在包含 [1,2] 。
+collection.remove(1);
+
+// getRandom 应有相同概率返回 1 和 2 。
+collection.getRandom();
+
+```
+
+> 分析：O(1)时间可以考虑到哈希表，依据题目可以把数据存储到hash表，insert解决；建立map作为值跟位置的映射关系，因为可以重复，可以建立二维 `map[int]map[int]struct{}  `，remove时把值移除，把末尾的值剪切到移除的位置保证其他值的映射关系不会改变。注意点：剪切后映射为空的问题；移除末尾元素问题；
+
+```Golang
+type RandomizedCollection struct {
+    data []int
+    dataMap map[int]map[int]struct{}
+}
+
+
+/** Initialize your data structure here. */
+func Constructor() RandomizedCollection {
+    return RandomizedCollection{
+        dataMap: map[int]map[int]struct{}{},
+    }
+}
+
+
+/** Inserts a value to the collection. Returns true if the collection did not already contain the specified element. */
+func (this *RandomizedCollection) Insert(val int) bool {
+    _, ok := this.dataMap[val]
+    if !ok {
+        this.dataMap[val] = map[int]struct{}{}
+    }
+    this.data = append(this.data, val)
+    index := len(this.data) -1
+    this.dataMap[val][index] = struct{}{}
+    return !ok
+}
+
+
+/** Removes a value from the collection. Returns true if the collection contained the specified element. */
+func (this *RandomizedCollection) Remove(val int) bool {
+    value, ok  := this.dataMap[val]
+    if ok {
+        //把最后的元素填充移除的元素
+        index := 0
+        for k,_ := range value {
+            index = k
+        }
+        maxIndex := len(this.data)-1 //最后一个元素下标
+        maxVal := this.data[maxIndex] //最后一个元素值
+        //删除data
+        if maxIndex > 0 {
+            this.data[index] = maxVal
+            this.data = this.data[0:maxIndex]
+        } else {
+            this.data = []int{}
+        }
+        
+        //删除map中的元素
+        delete(this.dataMap[val], index)
+        if len(this.dataMap[val]) == 0 {
+            delete(this.dataMap, val)
+        }
+        if index != maxIndex {
+            //删除最后一个元素的map
+            delete(this.dataMap[maxVal], maxIndex)
+            //最后一个元素map添加到删除的map
+            this.dataMap[maxVal][index] = struct{}{}
+        }
+        
+    }
+    return ok
+}
+
+
+/** Get a random element from the collection. */
+func (this *RandomizedCollection) GetRandom() int {
+    rand.Seed(time.Now().UnixNano())
+    x := rand.Intn(len(this.data))
+    return this.data[x]
+}
+
+
+/**
+ * Your RandomizedCollection object will be instantiated and called as such:
+ * obj := Constructor();
+ * param_1 := obj.Insert(val);
+ * param_2 := obj.Remove(val);
+ * param_3 := obj.GetRandom();
+ */
+```
